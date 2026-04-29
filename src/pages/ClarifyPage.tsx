@@ -1,20 +1,28 @@
-import { FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
+import { aiConfigured } from "../lib/aiClient";
 
 export function ClarifyPage() {
-  const { clarifyAnswers, setClarify, buildDraftPlan } = useApp();
+  const { clarifyAnswers, buildDraftPlan, planLoading, planError } = useApp();
   const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget as HTMLFormElement);
-    setClarify("deadline", String(fd.get("deadline") ?? ""));
-    setClarify("scope", String(fd.get("scope") ?? ""));
-    setClarify("risk", String(fd.get("risk") ?? ""));
-    buildDraftPlan();
-    navigate("/plan");
+    const clarifyPatch = {
+      deadline: String(fd.get("deadline") ?? ""),
+      scope: String(fd.get("scope") ?? ""),
+      risk: String(fd.get("risk") ?? ""),
+    };
+    setBusy(true);
+    const ok = await buildDraftPlan(clarifyPatch);
+    setBusy(false);
+    if (ok) navigate("/plan");
   };
+
+  const loading = busy || planLoading;
 
   return (
     <div className="card">
@@ -50,15 +58,20 @@ export function ClarifyPage() {
         />
 
         <div className="actions">
-          <button type="submit" className="btn btn-primary">
-            Generate draft plan
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? "Generating…" : "Generate draft plan"}
           </button>
-          <button type="button" className="btn" onClick={() => navigate("/goal")}>
+          <button type="button" className="btn" disabled={loading} onClick={() => navigate("/goal")}>
             Back
           </button>
         </div>
 
-        <p className="hint">Planner runs locally (`mockPlan.ts`): no servers, no keys.</p>
+        <p className="hint">
+          {aiConfigured()
+            ? "Planner calls your deployed AI API (see server/). Falls back to offline mock if the request fails."
+            : "Offline mock in mockPlan.ts. Set VITE_AI_API_BASE for cloud planning + chat."}
+        </p>
+        {planError && <div className="error">{planError}</div>}
       </form>
     </div>
   );

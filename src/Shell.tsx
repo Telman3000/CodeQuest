@@ -1,5 +1,7 @@
 import { NavLink, Navigate, Outlet } from "react-router-dom";
 import type { ReactElement } from "react";
+import { AiDock } from "./components/AiDock";
+import { CodeQuestLogo } from "./components/CodeQuestLogo";
 import { useApp } from "./context/AppContext";
 import type { SessionMode } from "./types";
 
@@ -53,9 +55,12 @@ export function Shell() {
   return (
     <div className="app-shell">
       <header className="app-brand">
-        <div>
-          <h1>CodeQuest</h1>
-          <div className="hint">Focus &amp; task structuring · mock planner</div>
+        <div className="app-brand-block">
+          <CodeQuestLogo size={42} className="app-logo" />
+          <div>
+            <h1>CodeQuest</h1>
+            <div className="hint">Focus &amp; task structuring · HIAD flow</div>
+          </div>
         </div>
         {sessionMode && (
           <button type="button" className="btn btn-ghost" onClick={resetSession}>
@@ -88,6 +93,8 @@ export function Shell() {
       </nav>
 
       <Outlet />
+
+      <AiDock />
     </div>
   );
 }

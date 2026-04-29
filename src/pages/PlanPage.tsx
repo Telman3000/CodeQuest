@@ -10,6 +10,9 @@ export function PlanPage() {
     updateMissionTitle,
     setFocusMission,
     focusMissionId,
+    planLoading,
+    planError,
+    planNotice,
   } = useApp();
   const navigate = useNavigate();
 
@@ -21,8 +24,12 @@ export function PlanPage() {
     <div className="card">
       <h2 className="page-title">Plan review</h2>
       <p className="lead">
-        Draft missions with short rationale. Edit titles, delete noisy items, regenerate the whole draft, then move to focus mode.
+        Draft missions with short rationale. Edit titles, delete noisy items, regenerate the whole draft, then move to focus mode. Use{" "}
+        <strong>AI chat</strong> on the side for questions like in the HIAD wireframes.
       </p>
+
+      {planNotice && <div className="plan-notice">{planNotice}</div>}
+      {planError && <div className="error">{planError}</div>}
 
       {missions.map((m) => (
         <div key={m.id} className="mission">
@@ -48,18 +55,23 @@ export function PlanPage() {
       ))}
 
       <div className="actions">
-        <button type="button" className="btn" onClick={() => { regeneratePlan(); }}>
-          Regenerate
+        <button
+          type="button"
+          className="btn"
+          disabled={planLoading}
+          onClick={() => void regeneratePlan()}
+        >
+          {planLoading ? "Regenerating…" : "Regenerate"}
         </button>
         <button
           type="button"
           className="btn btn-primary"
-          disabled={!focusMissionId}
+          disabled={!focusMissionId || planLoading}
           onClick={() => navigate("/execute")}
         >
           Continue to execution
         </button>
-        <button type="button" className="btn" onClick={() => navigate("/clarify")}>
+        <button type="button" className="btn" disabled={planLoading} onClick={() => navigate("/clarify")}>
           Back to clarification
         </button>
       </div>

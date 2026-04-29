@@ -2,12 +2,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { Mission, SessionMode } from "../types";
-import { generateMissions } from "../lib/mockPlan";
+import { resolvePlanMissions } from "../lib/aiClient";
 
 export type AppState = {
   sessionMode: SessionMode;
@@ -25,6 +27,9 @@ export type AppState = {
   pomodoroFullRuns: number;
   /** Start / resume presses (engagement). */
   pomodoroStarts: number;
+  planLoading: boolean;
+  planError: string | null;
+  planNotice: string | null;
 };
 
 const POMO = 25 * 60;
@@ -43,6 +48,9 @@ const defaultState: AppState = {
   completedMissionIds: [],
   pomodoroFullRuns: 0,
   pomodoroStarts: 0,
+  planLoading: false,
+  planError: null,
+  planNotice: null,
 };
 
 export type AppContextValue = AppState & {
@@ -51,8 +59,8 @@ export type AppContextValue = AppState & {
   resetSession: () => void;
   setGoal: (title: string, body: string, constraints: string) => void;
   setClarify: (key: string, value: string) => void;
-  buildDraftPlan: () => void;
-  regeneratePlan: () => void;
+  buildDraftPlan: (clarifyPatch?: Record<string, string>) => Promise<boolean>;
+  regeneratePlan: () => Promise<boolean>;
   deleteMission: (id: string) => void;
   updateMissionTitle: (id: string, title: string) => void;
   setFocusMission: (id: string | null) => void;
@@ -67,6 +75,10 @@ const AppCtx = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [s, setS] = useState<AppState>(defaultState);
+  const stateRef = useRef(s);
+  useEffect(() => {
+    stateRef.current = s;
+  }, [s]);
 
   const signInGuest = useCallback(() => {
     setS((p) => ({ ...p, sessionMode: "guest", sessionEmail: "" }));
@@ -98,32 +110,85 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const buildDraftPlan = useCallback(() => {
-    setS((p) => {
-      const missions = generateMissions(
-        `${p.goalTitle}\n${p.goalBody}`,
-        p.clarifyAnswers
-      );
-      const first = missions[0]?.id ?? null;
-      return { ...p, missions, focusMissionId: first };
-    });
+  const buildDraftPlan = useCallback(async (clarifyPatch?: Record<string, string>): Promise<boolean> => {
+    const p = stateRef.current;
+    const mergedClarify = clarifyPatch ? { ...p.clarifyAnswers, ...clarifyPatch } : p.clarifyAnswers;
+    stateRef.current = { ...p, clarifyAnswers: mergedClarify };
+    setS((cur) => ({
+      ...cur,
+      clarifyAnswers: mergedClarify,
+      planLoading: true,
+      planError: null,
+      planNotice: null,
+    }));
+    try {
+      const goalText = `${stateRef.current.goalTitle}\n${stateRef.current.goalBody}`;
+      const { missions, notice } = await resolvePlanMissions(goalText, mergedClarify);
+      if (!missions.length) {
+        setS((cur) => ({
+          ...cur,
+          planLoading: false,
+          planError: "Planner returned an empty list.",
+          planNotice: null,
+        }));
+        return false;
+      }
+      setS((cur) => ({
+        ...cur,
+        missions,
+        focusMissionId: missions[0]?.id ?? null,
+        planLoading: false,
+        planError: null,
+        planNotice: notice,
+      }));
+      return true;
+    } catch (e) {
+      setS((cur) => ({
+        ...cur,
+        planLoading: false,
+        planError: String((e as Error).message),
+        planNotice: null,
+      }));
+      return false;
+    }
   }, []);
 
-  const regeneratePlan = useCallback(() => {
-    setS((p) => {
-      const missions = generateMissions(`${p.goalTitle}\n${p.goalBody}`, {
-        ...p.clarifyAnswers,
-        _regen: String(Date.now()),
-      });
-      const first = missions[0]?.id ?? null;
-      return {
-        ...p,
+  const regeneratePlan = useCallback(async (): Promise<boolean> => {
+    const p = stateRef.current;
+    setS((cur) => ({ ...cur, planLoading: true, planError: null, planNotice: null }));
+    try {
+      const clarify = { ...p.clarifyAnswers, _regen: String(Date.now()) };
+      const goalText = `${p.goalTitle}\n${p.goalBody}`;
+      const { missions, notice } = await resolvePlanMissions(goalText, clarify);
+      if (!missions.length) {
+        setS((cur) => ({
+          ...cur,
+          planLoading: false,
+          planError: "Planner returned an empty list.",
+          planNotice: null,
+        }));
+        return false;
+      }
+      setS((cur) => ({
+        ...cur,
         missions,
-        focusMissionId: first,
+        focusMissionId: missions[0]?.id ?? null,
         pomodoroRemaining: null,
         pomodoroPaused: true,
-      };
-    });
+        planLoading: false,
+        planError: null,
+        planNotice: notice,
+      }));
+      return true;
+    } catch (e) {
+      setS((cur) => ({
+        ...cur,
+        planLoading: false,
+        planError: String((e as Error).message),
+        planNotice: null,
+      }));
+      return false;
+    }
   }, []);
 
   const deleteMission = useCallback((id: string) => {

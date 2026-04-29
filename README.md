@@ -39,4 +39,10 @@ If the remote already has a commit (e.g. only LICENSE), pull with allow-unrelate
 
 ## Note on “AI”
 
-Planning uses **mock** logic (`src/lib/mockPlan.ts`) — no API keys required. You can swap it for a real backend later.
+- **Without setup:** planning uses **offline mock** logic (`src/lib/mockPlan.ts`) and the **AI chat** panel uses **rule-based replies** — no API keys in the browser.
+- **For real model (you + everyone):**
+  1. Deploy the small proxy in **`server/`** (Node 18+). Set **`OPENAI_API_KEY`** on the host (never commit it). Optional: **`OPENAI_MODEL`**, **`CORS_ORIGIN`** (your Vite/production site origin).
+  2. In the web app root, copy **`.env.example`** → **`.env`** and set **`VITE_AI_API_BASE`** to that server’s public URL (no trailing slash), e.g. `https://your-api.up.railway.app`.
+  3. Local API test: `cd server && npm start` → set `VITE_AI_API_BASE=http://localhost:8787` and run **`npm run dev`**.
+
+The client calls **`POST …/plan`** and **`POST …/chat`** (see `src/lib/aiClient.ts`). If the API is down, planning falls back to the mock and chat falls back to offline hints.
