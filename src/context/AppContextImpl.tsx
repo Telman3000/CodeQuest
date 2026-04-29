@@ -21,6 +21,10 @@ export type AppState = {
   pomodoroRemaining: number | null;
   pomodoroPaused: boolean;
   completedMissionIds: string[];
+  /** Finished 25m runs (timer reached 0). */
+  pomodoroFullRuns: number;
+  /** Start / resume presses (engagement). */
+  pomodoroStarts: number;
 };
 
 const POMO = 25 * 60;
@@ -37,6 +41,8 @@ const defaultState: AppState = {
   pomodoroRemaining: null,
   pomodoroPaused: true,
   completedMissionIds: [],
+  pomodoroFullRuns: 0,
+  pomodoroStarts: 0,
 };
 
 export type AppContextValue = AppState & {
@@ -153,11 +159,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const startPomodoro = useCallback(() => {
-    setS((p) => ({
-      ...p,
-      pomodoroRemaining: p.pomodoroRemaining ?? POMO,
-      pomodoroPaused: false,
-    }));
+    setS((p) => {
+      const wasPaused = p.pomodoroPaused;
+      return {
+        ...p,
+        pomodoroRemaining: p.pomodoroRemaining ?? POMO,
+        pomodoroPaused: false,
+        pomodoroStarts: wasPaused ? p.pomodoroStarts + 1 : p.pomodoroStarts,
+      };
+    });
   }, []);
 
   const pausePomodoro = useCallback(() => {
@@ -176,10 +186,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setS((p) => {
       if (p.pomodoroPaused || p.pomodoroRemaining === null) return p;
       const next = Math.max(0, p.pomodoroRemaining - 1);
+      const finished = next === 0 && p.pomodoroRemaining > 0;
       return {
         ...p,
         pomodoroRemaining: next,
         pomodoroPaused: next === 0 ? true : p.pomodoroPaused,
+        pomodoroFullRuns: finished ? p.pomodoroFullRuns + 1 : p.pomodoroFullRuns,
       };
     });
   }, []);

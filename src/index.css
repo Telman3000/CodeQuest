@@ -222,3 +222,93 @@ button {
     display: none;
   }
 }
+
+.performance-radar {
+  flex: 0 0 auto;
+}
+
+.performance-radar-title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.performance-radar-svg {
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  display: block;
+}
+
+.performance-radar-grid {
+  fill: rgba(0, 0, 0, 0.12);
+  stroke: var(--border);
+  stroke-width: 0.75;
+}
+
+.performance-radar-axis {
+  stroke: var(--border);
+  stroke-width: 0.6;
+  opacity: 0.85;
+}
+
+.performance-radar-fill {
+  fill: rgba(47, 184, 106, 0.22);
+  stroke: none;
+}
+
+.performance-radar-stroke {
+  stroke: var(--accent2);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.performance-radar-label {
+  fill: var(--muted);
+  font-size: 8px;
+  font-weight: 500;
+}
+
+.progress-radar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px 32px;
+  margin: 20px 0 8px;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.radar-legend {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  flex: 1 1 180px;
+  min-width: 160px;
+}
+
+.radar-legend li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.92rem;
+}
+
+.radar-legend li:last-child {
+  border-bottom: none;
+}
+
+.radar-legend-label {
+  color: var(--muted);
+}
+
+.radar-legend-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--accent2);
+}
