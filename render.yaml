@@ -1,5 +1,6 @@
-# Render Blueprint: deploy the AI proxy in /server (optional — you can also use "New Web Service" manually).
-# After deploy: open the service → Environment → add OPENAI_API_KEY (mark secret).
+# Render Blueprint: API (server/) + public static site (Vite dist/).
+# In the deploy UI: set OPENAI_API_KEY (secret) and VITE_AI_API_BASE = your API URL (https://codequest-ai-....onrender.com, no trailing slash).
+# Optionally on the API service set CORS_ORIGIN to your static site URL once you know it (or use * for testing).
 services:
   - type: web
     name: codequest-ai
@@ -17,6 +18,19 @@ services:
         value: gpt-4o-mini
       - key: CORS_ORIGIN
         value: "*"
-      # Set in Render dashboard (Secrets); never commit real keys.
       - key: OPENAI_API_KEY
+        sync: false
+
+  - type: web
+    name: codequest-web
+    runtime: static
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_AI_API_BASE
         sync: false

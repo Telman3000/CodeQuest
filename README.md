@@ -70,9 +70,17 @@ If the service sleeps on a free tier, the first request may be slow or timeout �
 
 ### Render (Blueprint or Web Service)
 
-- **Blueprint:** the repo includes **`render.yaml`** at the root. In Render: **New** → **Blueprint** → connect **Telman3000/CodeQuest** → branch **`main`**. After the service is created, open it → **Environment** → add **`OPENAI_API_KEY`** as a **secret**.
-- **Without Blueprint:** **New** → **Web Service** → same repo → set **Root Directory** to **`server`**, **Build** `npm install`, **Start** `npm start`, add env vars manually.
-- **Health check:** `GET https://YOUR-SERVICE.onrender.com/health` should return `{"ok":true,...}`.
-- Put the service **HTTPS URL** (no trailing slash) into your frontend **`.env`** as **`VITE_AI_API_BASE`**.
+The **`render.yaml`** Blueprint defines **two** pieces:
 
-If Blueprint says the file is missing, **pull the latest `main`** from GitHub (this repo now ships `render.yaml`).
+1. **`codequest-ai`** — Node API in `server/` (JSON-only root; use `/health` to verify). Needs **`OPENAI_API_KEY`** in the deploy UI or Environment tab.
+2. **`codequest-web`** — **public frontend** (static Vite build). This is the **`.onrender.com` URL you share** — full CodeQuest UI in the browser. At deploy time set **`VITE_AI_API_BASE`** to the **same URL as `codequest-ai`** (e.g. `https://codequest-ai-xxxx.onrender.com`, no trailing slash). That value is baked in at **build time**.
+
+**After changing `VITE_AI_API_BASE` on the static site**, trigger a new deploy (e.g. **Manual Deploy → Clear build cache & deploy**) so the bundle picks it up.
+
+- **SPA routing:** `routes` in `render.yaml` rewrite `/*` → `/index.html`. `public/_redirects` is also copied into `dist/` for hosts that read it.
+- **Sync Blueprint:** Dashboard → your Blueprint → **Sync** / connect repo so Render pulls the latest `render.yaml`.
+- **CORS:** API defaults to `CORS_ORIGIN=*`. For stricter setup, set the API’s **`CORS_ORIGIN`** to your static site URL (e.g. `https://codequest-web-xxxx.onrender.com`).
+
+**Local dev:** still use **`http://localhost:5173`** and a local **`.env`** with **`VITE_AI_API_BASE`** pointing at your API.
+
+If Blueprint says the file is missing, **pull the latest `main`** from GitHub.
