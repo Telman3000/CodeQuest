@@ -1,0 +1,16 @@
+# Отчёт и LaTeX — отдельная папка на рабочем столе (Hum-ai); не коммитить копию сюда
+Hum-ai/
+
+node_modules/
+dist/
+.DS_Store
+*.local
+.env
+.env.*
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tsbuildinfo
+.vscode/*
+!.vscode/extensions.json
