@@ -1,0 +1,22 @@
+# Render Blueprint: deploy the AI proxy in /server (optional — you can also use "New Web Service" manually).
+# After deploy: open the service → Environment → add OPENAI_API_KEY (mark secret).
+services:
+  - type: web
+    name: codequest-ai
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: CORS_ORIGIN
+        value: "*"
+      # Set in Render dashboard (Secrets); never commit real keys.
+      - key: OPENAI_API_KEY
+        sync: false

@@ -67,7 +67,16 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   const u = new URL(req.url || "/", "http://localhost");
-  if (req.method !== "POST" || !["/plan", "/chat"].includes(u.pathname)) {
+  const pathname = u.pathname || "/";
+  if (
+    req.method === "GET" &&
+    (pathname === "/" || pathname === "/health")
+  ) {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, service: "codequest-ai" }));
+    return;
+  }
+  if (req.method !== "POST" || !["/plan", "/chat"].includes(pathname)) {
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not found" }));
     return;
@@ -79,7 +88,7 @@ const server = http.createServer(async (req, res) => {
   }
   try {
     const body = await readJson(req);
-    if (u.pathname === "/plan") {
+    if (pathname === "/plan") {
       const goalText = String(body.goalText ?? "");
       const clarify =
         typeof body.clarifyAnswers === "object" && body.clarifyAnswers
@@ -99,7 +108,7 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify(json));
       return;
     }
-    if (u.pathname === "/chat") {
+    if (pathname === "/chat") {
       const messagesRaw = body.messages;
       const ctx = body.context ?? {};
       const messages = Array.isArray(messagesRaw) ? messagesRaw : [];

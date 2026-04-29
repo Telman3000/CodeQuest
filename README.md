@@ -67,3 +67,12 @@ The client calls **`POST …/plan`** and **`POST …/chat`** (see `src/lib/aiCli
 6. **Smoke test:** open `https://YOUR-RAILWAY-URL/plan` in a browser — you should get **404 JSON** (`Not found`) because only **POST** is allowed; that still proves the service is up. Real check: run the app and use **Generate draft plan** / **AI chat**.
 
 If the service sleeps on a free tier, the first request may be slow or timeout — retry once.
+
+### Render (Blueprint or Web Service)
+
+- **Blueprint:** the repo includes **`render.yaml`** at the root. In Render: **New** → **Blueprint** → connect **Telman3000/CodeQuest** → branch **`main`**. After the service is created, open it → **Environment** → add **`OPENAI_API_KEY`** as a **secret**.
+- **Without Blueprint:** **New** → **Web Service** → same repo → set **Root Directory** to **`server`**, **Build** `npm install`, **Start** `npm start`, add env vars manually.
+- **Health check:** `GET https://YOUR-SERVICE.onrender.com/health` should return `{"ok":true,...}`.
+- Put the service **HTTPS URL** (no trailing slash) into your frontend **`.env`** as **`VITE_AI_API_BASE`**.
+
+If Blueprint says the file is missing, **pull the latest `main`** from GitHub (this repo now ships `render.yaml`).
