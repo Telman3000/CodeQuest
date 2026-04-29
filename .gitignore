@@ -1,7 +1,7 @@
-# Cursor — local agent rules and settings (not committed)
+# Cursor — local agent rules and settings
 .cursor/
 
-# Report / LaTeX — separate folder on Desktop (Hum-ai); do not vendor into this repo
+# Report / LaTeX
 Hum-ai/
 
 node_modules/
